@@ -1,0 +1,38 @@
+name: Java push to branch
+on:
+ workflow_run:
+   workflows: [Java Build and Test]
+   types:
+      - completed
+permissions:
+ contents: write
+jobs:
+  publish-on:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-java@v3
+      with:
+       java-version: '11'
+       distribution: 'temurin'
+       cache: maven
+    - run: mvn clean package -DskipTests
+    - run: |
+       mkdir -p artifects-store
+       cp target/*.jar artifects-store
+    - uses: actions/upload-artifact@v1
+      with:
+        name: hello-spring-Package
+        path: artifects-store
+#     - name: Upload Artefacts to artefacts-store branch
+#       uses: actions/checkout@v3
+#       with:
+#         ref: artefects-store
+    - name: Add artefacts to git
+      run: |
+          git config --global user.name ${{secrets.USERNAME}}
+          git config --global user.email ${{secrets.EMAIL}}
+          git checkout -b artefects-store
+          git add artifects-store
+          git commit -m "Add artefacts" 
+          git push origin artefects-store
